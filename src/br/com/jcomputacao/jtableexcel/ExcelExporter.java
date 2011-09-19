@@ -44,7 +44,7 @@ public class ExcelExporter {
 
     private void createHeader(HSSFSheet sheet) {
         int cols = tableModel.getColumnCount();
-        HSSFRow row = sheet.createRow(1);
+        HSSFRow row = sheet.createRow(0);
 
         for (int i = 0; i < cols; i++) {
             String columnName = tableModel.getColumnName(i);
