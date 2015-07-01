@@ -43,7 +43,8 @@ public class ReadingExcelFileTest {
 
     @Test
     public void hello() throws FileNotFoundException, IOException {
-        File excel = new File("cellStyleExample.xlsx");
+        //File excel = new File("cellStyleExample.xlsx");
+        File excel = new File("/Users/murilo/Documents/exemploFormula.xlsx");
         FileInputStream fis = new FileInputStream(excel);
         XSSFWorkbook wb = new XSSFWorkbook(fis);
         int sheets = wb.getNumberOfSheets();
@@ -57,18 +58,20 @@ public class ReadingExcelFileTest {
 
             for (int i = 0; i < rowNum; i++) {
                 XSSFRow row = ws.getRow(i);
-                for (int j = 0; j < colNum; j++) {
-                    XSSFCell cell = row.getCell(j);
-                    XSSFCellStyle style = cell.getCellStyle();
-                    String value = cell.toString();
-                    data[i][j] = value;
-                    System.out.println("The value in sheet " + sheetName + ", line " + i + " and column " + j + " is " + value);
-                    System.out.println("Fill Pattern       : " + style.getFillPatternEnum());
-                    System.out.println("Background Color   : " + style.getFillBackgroundColor());
-                    System.out.println("Foreground Color   : " + style.getFillForegroundColor());
-                    System.out.println("Font theme Color   : " + style.getFont().getThemeColor());
-                    System.out.println("Font family        : " + style.getFont().getFamily());
-                    System.out.println("Font Color         : " + style.getFont().getColor());
+                if (row != null) {
+                    for (int j = 0; j < colNum; j++) {
+                        XSSFCell cell = row.getCell(j);
+                        XSSFCellStyle style = cell.getCellStyle();
+                        String value = cell.toString();
+                        data[i][j] = value;
+                        System.out.println("The value in sheet " + sheetName + ", line " + i + " and column " + j + " is " + value);
+                        System.out.println("Fill Pattern       : " + style.getFillPatternEnum());
+                        System.out.println("Background Color   : " + style.getFillBackgroundColor());
+                        System.out.println("Foreground Color   : " + style.getFillForegroundColor());
+                        System.out.println("Font theme Color   : " + style.getFont().getThemeColor());
+                        System.out.println("Font family        : " + style.getFont().getFamily());
+                        System.out.println("Font Color         : " + style.getFont().getColor());
+                    }
                 }
             }
         }
