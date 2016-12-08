@@ -1,7 +1,9 @@
 package br.com.jcomputacao.jtableexcel;
 
+import java.util.List;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.util.ArrayList;
 import javax.swing.table.TableModel;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRichTextString;
@@ -24,6 +26,8 @@ public class ExcelExporter {
     private final OutputStream destination;
     private String sheetName;
     private boolean xlsx = true;
+    private List<TableModel> tableModels;
+    private List<String> sheetNames;
 
     public ExcelExporter(TableModel model, OutputStream destination) {
         this.tableModel = model;
@@ -41,6 +45,27 @@ public class ExcelExporter {
     public void setSheetName(String sheetName) {
         this.sheetName = sheetName;
     }
+    
+    public void addSheet(TableModel model, String sheetName) {
+        if (tableModels == null) {
+            this.tableModels = new ArrayList<TableModel>();
+        }
+        tableModels.add(model);
+        if (sheetNames == null) {
+            this.sheetNames = new ArrayList<String>();
+        }
+        sheetNames.add(sheetName);
+    }
+    
+    public void addSheet(TableModel model) {
+        String thisSheetName;
+        if (this.tableModels == null) {
+            thisSheetName = "Folha 2";
+        } else {
+            thisSheetName = "Folha " + tableModels.size() + 1;
+        }
+        addSheet(model, thisSheetName);
+    }
 
     public void execute() throws IOException {
         if(xlsx) {
@@ -57,8 +82,19 @@ public class ExcelExporter {
         }
         HSSFSheet sheet = workbook.createSheet(this.sheetName);
 
-        createHeader(sheet);
-        createBody(sheet);
+        createHeader(tableModel, sheet);
+        createBody(tableModel, sheet);
+        
+        if (tableModels != null && !tableModels.isEmpty()) {
+            for (int i = 0; i < tableModels.size(); i++) {
+                TableModel thisTableModel = tableModels.get(i);
+                String thisSheetName = sheetNames.get(i);
+                sheet = workbook.createSheet(thisSheetName);
+                
+                createHeader(thisTableModel, sheet);
+                createBody(thisTableModel, sheet);
+            }
+        }
 
         workbook.write(destination);
     }
@@ -70,46 +106,57 @@ public class ExcelExporter {
         }
         XSSFSheet sheet = workbook.createSheet(this.sheetName);
 
-        createHeader(sheet);
-        createBody(sheet);
+        createHeader(tableModel, sheet);
+        createBody(tableModel, sheet);
+        
+                if (tableModels != null && !tableModels.isEmpty()) {
+            for (int i = 0; i < tableModels.size(); i++) {
+                TableModel thisTableModel = tableModels.get(i);
+                String thisSheetName = sheetNames.get(i);
+                sheet = workbook.createSheet(thisSheetName);
+                
+                createHeader(thisTableModel, sheet);
+                createBody(thisTableModel, sheet);
+            }
+        }
 
         workbook.write(destination);
     }
 
-    private void createHeader(HSSFSheet sheet) {
-        int cols = tableModel.getColumnCount();
+    private void createHeader(TableModel thisTableModel, HSSFSheet sheet) {
+        int cols = thisTableModel.getColumnCount();
         HSSFRow row = sheet.createRow(0);
 
         for (int i = 0; i < cols; i++) {
-            String columnName = tableModel.getColumnName(i);
+            String columnName = thisTableModel.getColumnName(i);
             HSSFCell cell = row.createCell(i);
             cell.setCellType(HSSFCell.CELL_TYPE_STRING);
             cell.setCellValue(new HSSFRichTextString(columnName));
         }
     }
     
-    private void createHeader(XSSFSheet sheet) {
-        int cols = tableModel.getColumnCount();
+    private void createHeader(TableModel thisTableModel, XSSFSheet sheet) {
+        int cols = thisTableModel.getColumnCount();
         XSSFRow row = sheet.createRow(0);
 
         for (int i = 0; i < cols; i++) {
-            String columnName = tableModel.getColumnName(i);
+            String columnName = thisTableModel.getColumnName(i);
             XSSFCell cell = row.createCell(i);
             cell.setCellType(XSSFCell.CELL_TYPE_STRING);
             cell.setCellValue(new XSSFRichTextString(columnName));
         }
     }
     
-    private void createBody(HSSFSheet sheet) {
-        int cols = tableModel.getColumnCount();
-        int rows = tableModel.getRowCount();
+    private void createBody(TableModel thisTableModel, HSSFSheet sheet) {
+        int cols = thisTableModel.getColumnCount();
+        int rows = thisTableModel.getRowCount();
 
         for (int i = 0; i < rows; i++) {
             HSSFRow row = sheet.createRow(i+1);
             for (int j = 0; j < cols; j++) {
                 HSSFCell cell = row.createCell(j);
 
-                Object value = tableModel.getValueAt(i, j);
+                Object value = thisTableModel.getValueAt(i, j);
                 if (value != null) {
                     defineCell(cell, value);
                 }
@@ -117,16 +164,16 @@ public class ExcelExporter {
         }
     }
 
-    private void createBody(XSSFSheet sheet) {
-        int cols = tableModel.getColumnCount();
-        int rows = tableModel.getRowCount();
+    private void createBody(TableModel thisTableModel, XSSFSheet sheet) {
+        int cols = thisTableModel.getColumnCount();
+        int rows = thisTableModel.getRowCount();
 
         for (int i = 0; i < rows; i++) {
             XSSFRow row = sheet.createRow(i+1);
             for (int j = 0; j < cols; j++) {
                 XSSFCell cell = row.createCell(j);
 
-                Object value = tableModel.getValueAt(i, j);
+                Object value = thisTableModel.getValueAt(i, j);
                 if (value != null) {
                     defineCell(cell, value);
                 }
