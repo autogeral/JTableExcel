@@ -3,13 +3,25 @@ package br.com.jcomputacao.jtableexcel;
 import java.util.List;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.time.LocalDate;
+import java.time.LocalTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
+import java.time.format.ResolverStyle;
 import java.util.ArrayList;
+import java.util.Date;
+import java.util.Locale;
 import javax.swing.table.TableModel;
 import org.apache.poi.hssf.usermodel.HSSFCell;
 import org.apache.poi.hssf.usermodel.HSSFRichTextString;
 import org.apache.poi.hssf.usermodel.HSSFRow;
 import org.apache.poi.hssf.usermodel.HSSFSheet;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.CreationHelper;
+import org.apache.poi.ss.usermodel.DateUtil;
+import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
@@ -22,12 +34,20 @@ import org.apache.poi.xssf.usermodel.XSSFWorkbook;
  */
 public class ExcelExporter {
 
+    private static final Locale LOCALE = new Locale("pt", "BR");
+    private static final DateTimeFormatter FORMAT_DATE = DateTimeFormatter
+            .ofPattern("dd/MM/yyyy", LOCALE);
+    private static final DateTimeFormatter FORMAT_TIME = DateTimeFormatter
+            .ofPattern("HH:mm:ss", LOCALE);
+    
     private final TableModel tableModel;
     private final OutputStream destination;
     private String sheetName;
     private boolean xlsx = true;
     private List<TableModel> tableModels;
     private List<String> sheetNames;
+    private CellStyle localDateCellStyle;
+    private CellStyle localTimeCellStyle;
 
     public ExcelExporter(TableModel model, OutputStream destination) {
         this.tableModel = model;
@@ -80,8 +100,8 @@ public class ExcelExporter {
         if (this.sheetName == null || this.sheetName.trim().equals("")) {
             this.sheetName = "JTable";
         }
+        createCellStyle(workbook);
         HSSFSheet sheet = workbook.createSheet(this.sheetName);
-
         createHeader(tableModel, sheet);
         createBody(tableModel, sheet);
         
@@ -90,7 +110,6 @@ public class ExcelExporter {
                 TableModel thisTableModel = tableModels.get(i);
                 String thisSheetName = sheetNames.get(i);
                 sheet = workbook.createSheet(thisSheetName);
-                
                 createHeader(thisTableModel, sheet);
                 createBody(thisTableModel, sheet);
             }
@@ -104,8 +123,8 @@ public class ExcelExporter {
         if (this.sheetName == null || this.sheetName.trim().equals("")) {
             this.sheetName = "JTable";
         }
+        createCellStyle(workbook);
         XSSFSheet sheet = workbook.createSheet(this.sheetName);
-
         createHeader(tableModel, sheet);
         createBody(tableModel, sheet);
         
@@ -121,6 +140,14 @@ public class ExcelExporter {
         }
 
         workbook.write(destination);
+    }
+
+    private void createCellStyle(Workbook workbook) {
+        CreationHelper createHelper = workbook.getCreationHelper();
+        localDateCellStyle = workbook.createCellStyle();
+        localDateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
+        localTimeCellStyle = workbook.createCellStyle();
+        localTimeCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("[HH]:mm:ss"));
     }
 
     private void createHeader(TableModel thisTableModel, HSSFSheet sheet) {
@@ -192,9 +219,23 @@ public class ExcelExporter {
 //        } else if (value instanceof java.util.Date || value instanceof java.util.Calendar) {
 //            cell.setCellType(HSSFCell.CELL_TYPE_STRING);
 //            cell.setCellValue(new Double(value.toString()));
+        } else if (value instanceof LocalDate) {
+            cell.setCellStyle(localDateCellStyle);
+            cell.setCellValue(DateUtil.getExcelDate(asDate((LocalDate) value)));
+        } else if (value instanceof LocalTime) {
+            cell.setCellStyle(localTimeCellStyle);
+            cell.setCellValue(DateUtil.convertTime(((LocalTime) value).format(FORMAT_TIME)));
         } else {
-            cell.setCellType(HSSFCell.CELL_TYPE_STRING);
-            cell.setCellValue(new HSSFRichTextString(value.toString()));
+            if (isDateValid((String) value)) {
+                cell.setCellStyle(localDateCellStyle);
+                cell.setCellValue(DateUtil.getExcelDate(asDate(LocalDate.parse((String) value, FORMAT_DATE))));
+            } else if (isTimeValid((String) value)) {
+                cell.setCellStyle(localTimeCellStyle);
+                cell.setCellValue(DateUtil.convertTime((String) value));
+            } else {
+                cell.setCellType(HSSFCell.CELL_TYPE_STRING);
+                cell.setCellValue(new HSSFRichTextString(value != null ? value.toString() : ""));
+            }
         }
     }
 
@@ -209,10 +250,71 @@ public class ExcelExporter {
 //        } else if (value instanceof java.util.Date || value instanceof java.util.Calendar) {
 //            cell.setCellType(HSSFCell.CELL_TYPE_STRING);
 //            cell.setCellValue(new Double(value.toString()));
+        } else if (value instanceof LocalDate) {
+            cell.setCellStyle(localDateCellStyle);
+            cell.setCellValue(DateUtil.getExcelDate(asDate((LocalDate) value)));
+        } else if (value instanceof LocalTime) {
+            cell.setCellStyle(localTimeCellStyle);
+            cell.setCellValue(DateUtil.convertTime(((LocalTime) value).format(FORMAT_TIME)));
         } else {
-            cell.setCellType(XSSFCell.CELL_TYPE_STRING);
-            cell.setCellValue(new XSSFRichTextString(value.toString()));
+            if (isDateValid((String) value)) {
+                cell.setCellStyle(localDateCellStyle);
+                cell.setCellValue(DateUtil.getExcelDate(asDate(LocalDate.parse((String) value, FORMAT_DATE))));
+            } else if (isTimeValid((String) value)) {
+                cell.setCellStyle(localTimeCellStyle);
+                cell.setCellValue(DateUtil.convertTime((String) value));
+            } else {
+                cell.setCellType(XSSFCell.CELL_TYPE_STRING);
+                cell.setCellValue(new XSSFRichTextString(value != null ? value.toString() : ""));
+            }
+        }
+    }
+    
+    private Date asDate(LocalDate localDate) {
+        return Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant());
+    }
+
+    public static boolean isDateValid(String date) {
+        if (date == null) {
+            return false;
+        }
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/uuuu").withResolverStyle(ResolverStyle.STRICT);
+        try {
+            LocalDate d = LocalDate.parse(date, formatter);
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
         }
     }
 
+    public static boolean isTimeValid(String time) {
+        if (time == null) {
+            return false;
+        }
+        DateTimeFormatter formatter = verifyTime(time);
+        try {
+            if (formatter == null) {
+                return false;
+            }
+            LocalTime t = LocalTime.parse(time, formatter);
+            return true;
+        } catch (DateTimeParseException ex) {
+            return false;
+        }
+    }
+
+    private static DateTimeFormatter verifyTime(String time) {
+        DateTimeFormatter formatter = null;
+        int aux = time.length();
+        switch (aux) {
+            case 5:
+                formatter = DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
+                break;
+            case 7:
+            case 8:
+                formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withResolverStyle(ResolverStyle.STRICT);
+                break;
+        }
+        return formatter;
+    }
 }
