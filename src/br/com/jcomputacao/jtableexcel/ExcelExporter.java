@@ -3,6 +3,7 @@ package br.com.jcomputacao.jtableexcel;
 import java.util.List;
 import java.io.IOException;
 import java.io.OutputStream;
+import java.math.BigDecimal;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.ZoneId;
@@ -23,6 +24,7 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
+import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -48,6 +50,7 @@ public class ExcelExporter {
     private List<String> sheetNames;
     private CellStyle localDateCellStyle;
     private CellStyle localTimeCellStyle;
+    private CellStyle decimalCellStyle;
 
     public ExcelExporter(TableModel model, OutputStream destination) {
         this.tableModel = model;
@@ -148,6 +151,8 @@ public class ExcelExporter {
         localDateCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("dd/MM/yyyy"));
         localTimeCellStyle = workbook.createCellStyle();
         localTimeCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("[HH]:mm:ss"));
+        decimalCellStyle = workbook.createCellStyle();
+        decimalCellStyle.setDataFormat(createHelper.createDataFormat().getFormat("#,##0.00"));
     }
 
     private void createHeader(TableModel thisTableModel, HSSFSheet sheet) {
@@ -240,10 +245,13 @@ public class ExcelExporter {
     }
 
     private void defineCell(XSSFCell cell, Object value) {
-        if (value instanceof Double || value instanceof Float
+        if (value instanceof Double || value instanceof Float || value instanceof BigDecimal
                 || value instanceof Long || value instanceof Integer) {
             cell.setCellType(XSSFCell.CELL_TYPE_NUMERIC);
             cell.setCellValue(new Double(value.toString()));
+            if(value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
+                cell.setCellStyle(decimalCellStyle);
+            }
         } else if (value instanceof Boolean) {
             cell.setCellType(XSSFCell.CELL_TYPE_BOOLEAN);
             cell.setCellValue(Boolean.valueOf(value.toString()));
