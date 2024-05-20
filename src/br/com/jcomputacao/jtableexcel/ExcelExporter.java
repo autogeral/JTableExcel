@@ -24,7 +24,6 @@ import org.apache.poi.ss.usermodel.CreationHelper;
 import org.apache.poi.ss.usermodel.DateUtil;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFCell;
-import org.apache.poi.xssf.usermodel.XSSFDataFormat;
 import org.apache.poi.xssf.usermodel.XSSFRichTextString;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
@@ -71,11 +70,11 @@ public class ExcelExporter {
     
     public void addSheet(TableModel model, String sheetName) {
         if (tableModels == null) {
-            this.tableModels = new ArrayList<TableModel>();
+            this.tableModels = new ArrayList<>();
         }
         tableModels.add(model);
         if (sheetNames == null) {
-            this.sheetNames = new ArrayList<String>();
+            this.sheetNames = new ArrayList<>();
         }
         sheetNames.add(sheetName);
     }
@@ -217,19 +216,19 @@ public class ExcelExporter {
         if (value instanceof Double || value instanceof Float
                 || value instanceof Long || value instanceof Integer) {
             cell.setCellType(HSSFCell.CELL_TYPE_NUMERIC);
-            cell.setCellValue(new Double(value.toString()));
+            cell.setCellValue(Double.parseDouble(value.toString()));
         } else if (value instanceof Boolean) {
             cell.setCellType(HSSFCell.CELL_TYPE_BOOLEAN);
-            cell.setCellValue(Boolean.valueOf(value.toString()));
+            cell.setCellValue(Boolean.parseBoolean(value.toString()));
 //        } else if (value instanceof java.util.Date || value instanceof java.util.Calendar) {
 //            cell.setCellType(HSSFCell.CELL_TYPE_STRING);
 //            cell.setCellValue(new Double(value.toString()));
-        } else if (value instanceof LocalDate) {
+        } else if (value instanceof LocalDate localDate) {
             cell.setCellStyle(localDateCellStyle);
-            cell.setCellValue(DateUtil.getExcelDate(asDate((LocalDate) value)));
-        } else if (value instanceof LocalTime) {
+            cell.setCellValue(DateUtil.getExcelDate(asDate(localDate)));
+        } else if (value instanceof LocalTime localTime) {
             cell.setCellStyle(localTimeCellStyle);
-            cell.setCellValue(DateUtil.convertTime(((LocalTime) value).format(FORMAT_TIME)));
+            cell.setCellValue(DateUtil.convertTime(localTime.format(FORMAT_TIME)));
         } else {
             if (isDateValid((String) value)) {
                 cell.setCellStyle(localDateCellStyle);
@@ -248,22 +247,22 @@ public class ExcelExporter {
         if (value instanceof Double || value instanceof Float || value instanceof BigDecimal
                 || value instanceof Long || value instanceof Integer) {
             cell.setCellType(XSSFCell.CELL_TYPE_NUMERIC);
-            cell.setCellValue(new Double(value.toString()));
+            cell.setCellValue(Double.parseDouble(value.toString()));
             if(value instanceof Double || value instanceof Float || value instanceof BigDecimal) {
                 cell.setCellStyle(decimalCellStyle);
             }
         } else if (value instanceof Boolean) {
             cell.setCellType(XSSFCell.CELL_TYPE_BOOLEAN);
-            cell.setCellValue(Boolean.valueOf(value.toString()));
+            cell.setCellValue(Boolean.parseBoolean(value.toString()));
 //        } else if (value instanceof java.util.Date || value instanceof java.util.Calendar) {
 //            cell.setCellType(HSSFCell.CELL_TYPE_STRING);
 //            cell.setCellValue(new Double(value.toString()));
-        } else if (value instanceof LocalDate) {
+        } else if (value instanceof LocalDate localDate) {
             cell.setCellStyle(localDateCellStyle);
-            cell.setCellValue(DateUtil.getExcelDate(asDate((LocalDate) value)));
-        } else if (value instanceof LocalTime) {
+            cell.setCellValue(DateUtil.getExcelDate(asDate(localDate)));
+        } else if (value instanceof LocalTime localTime) {
             cell.setCellStyle(localTimeCellStyle);
-            cell.setCellValue(DateUtil.convertTime(((LocalTime) value).format(FORMAT_TIME)));
+            cell.setCellValue(DateUtil.convertTime(localTime.format(FORMAT_TIME)));
         } else {
             if (isDateValid((String) value)) {
                 cell.setCellStyle(localDateCellStyle);
@@ -315,13 +314,8 @@ public class ExcelExporter {
         DateTimeFormatter formatter = null;
         int aux = time.length();
         switch (aux) {
-            case 5:
-                formatter = DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
-                break;
-            case 7:
-            case 8:
-                formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withResolverStyle(ResolverStyle.STRICT);
-                break;
+            case 5 -> formatter = DateTimeFormatter.ofPattern("HH:mm").withResolverStyle(ResolverStyle.STRICT);
+            case 7, 8 -> formatter = DateTimeFormatter.ofPattern("HH:mm:ss").withResolverStyle(ResolverStyle.STRICT);
         }
         return formatter;
     }
