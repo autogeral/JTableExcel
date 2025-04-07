@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
 import org.apache.poi.ss.usermodel.FillPatternType;
 import org.apache.poi.xssf.usermodel.XSSFCell;
 import org.apache.poi.xssf.usermodel.XSSFCellStyle;
@@ -44,9 +45,9 @@ public class ReadingExcelFileTest {
     @Test
     public void hello() throws FileNotFoundException, IOException {
         //File excel = new File("cellStyleExample.xlsx");
-        File excel = new File("/Users/murilo/Documents/exemploFormula.xlsx");
-        FileInputStream fis = new FileInputStream(excel);
-        XSSFWorkbook wb = new XSSFWorkbook(fis);
+        ClassLoader classloader = Thread.currentThread().getContextClassLoader();
+        InputStream is = classloader.getResourceAsStream("cellStyleExample.xlsx");
+        XSSFWorkbook wb = new XSSFWorkbook(is);
         int sheets = wb.getNumberOfSheets();
         for (int sheet = 0; sheet < sheets; sheet++) {
             String sheetName = wb.getSheetName(sheet);
